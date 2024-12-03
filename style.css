@@ -42,6 +42,7 @@ a:visited {
 
 /* SIDEBAR */
 .sidebar {
+  position: relative;
   flex-basis: 50rem;
   background-color: var(--color-dark--1);
   padding: 3rem 5rem 4rem 5rem;
@@ -231,14 +232,26 @@ a:visited {
   cursor: pointer;
   height: 30px;
   color: white;
-  background-color: green;
+  background-color: #00c46a;
   border: none;
 }
 .del--btn:hover {
   background-color: rgb(0, 188, 0);
 }
-
-/* .mohamed.ahmed {
-  color: red;
-  background-color: red;
-} */
+.sort {
+  font-size: 20px;
+  padding: 20px;
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  justify-content: end;
+}
+.sort select {
+  padding: 5px;
+  border: none;
+  outline: none;
+  background-color: #00c46a;
+  color: white;
+  border-radius: 5px;
+  font-size: 20px;
+}

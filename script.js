@@ -8,6 +8,7 @@ const inputDistance = document.querySelector('.form__input--distance');
 const inputDuration = document.querySelector('.form__input--duration');
 const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
+const sort = document.querySelector('#sort');
 
 class App {
   #map;
@@ -20,6 +21,7 @@ class App {
     inputType.addEventListener('change', this._toggleElevationField);
     containerWorkouts.addEventListener('click', this._moveToPuppup.bind(this));
     containerWorkouts.addEventListener('click', this._deleteList.bind(this));
+    sort.addEventListener('change', this._sort.bind(this));
   }
   _deleteList(e) {
     const btn = e.target.closest('.del--btn');
@@ -56,9 +58,7 @@ class App {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(this.#map);
-
     this.#map.on('click', this._showForm.bind(this));
-
     this.#workouts.forEach(work => {
       this._renderWorkoutMarker(work);
     });
@@ -115,11 +115,12 @@ class App {
 
       workout = new Cycling([lat, lng], distance, duration, elevation);
     }
+
     this.#workouts.push(workout);
-    this._renderList(workout);
+    this._sort();
     this._renderWorkoutMarker(workout);
     this._hideForm();
-    this._setToLocalstorage();
+    this._setToLocalstorage(this.#workouts);
   }
 
   _renderWorkoutMarker(workout) {
@@ -147,7 +148,7 @@ class App {
    
          <h2 class="workout__title">${
            workout.descriptipn
-         }    <button class="del--btn" data-id=${workout.id}> x </button> </h2>
+         }  <button class="del--btn" data-id=${workout.id}> x </button> </h2>
             <div class="workout__details">
               <span class="workout__icon">${
                 workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'
@@ -166,7 +167,7 @@ class App {
       html += `
             <div class="workout__details">
               <span class="workout__icon">⚡️</span>
-              <span class="workout__value">${workout.pace.toFixed(1)}</span>
+              <span class="workout__value">${workout.pace?.toFixed(1)}</span>
               <span class="workout__unit">min/km</span>
             </div>
             <div class="workout__details">
@@ -202,8 +203,9 @@ class App {
       animation: true,
     });
   }
-  _setToLocalstorage() {
-    localStorage.setItem('workout', JSON.stringify(this.#workouts));
+  _setToLocalstorage(list) {
+    localStorage.setItem('workout', JSON.stringify(list || []));
+    localStorage.setItem('sortValue', sort.value);
   }
   _getDataFromLocalstorage() {
     if (localStorage.getItem('workout')) {
@@ -213,11 +215,46 @@ class App {
         this._renderList(work);
       });
     }
+    if (localStorage.getItem('sortValue')) {
+      sort.value = localStorage.getItem('sortValue');
+    }
+  }
+  _sort() {
+    if (sort.value === 'duration') {
+      const sortList = [...this.#workouts]
+
+        .filter(work => work.duration)
+        .sort((a, b) => b.duration - a.duration);
+      this._clearList();
+      sortList.forEach(work => {
+        this._renderList(work);
+      });
+      this._setToLocalstorage(sortList);
+    }
+    if (sort.value === 'none') {
+      this._clearList();
+      this.#workouts.forEach(work => this._renderList(work));
+      this._setToLocalstorage(this.#workouts);
+    }
+    if (sort.value === 'distance') {
+      const sortList = [...this.#workouts]
+        .filter(work => work.distance)
+        .sort((a, b) => b.distance - a.distance);
+      this._clearList();
+      sortList.forEach(work => {
+        this._renderList(work);
+      });
+      this._setToLocalstorage(sortList);
+    }
   }
 
   reset() {
     localStorage.removeItem('workout');
     location.reload();
+  }
+  _clearList() {
+    const li = document.querySelectorAll('.workout');
+    li.forEach(li => li.remove());
   }
 }
 
