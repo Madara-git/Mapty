@@ -74,9 +74,10 @@ a:visited {
   margin-bottom: 1.75rem;
   cursor: pointer;
 
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap: 0.75rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  /* grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 0.75rem 1.5rem; */
 }
 .workout--running {
   border-left: 5px solid var(--color-brand--2);
@@ -86,6 +87,7 @@ a:visited {
 }
 
 .workout__title {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   font-size: 1.7rem;
@@ -254,4 +256,34 @@ a:visited {
   color: white;
   border-radius: 5px;
   font-size: 20px;
+}
+
+.edit {
+  padding: 5px;
+  border: none;
+  outline: none;
+  color: #ffb545;
+  background: none;
+  font-size: 20px;
+}
+
+.form__edit {
+  display: flex;
+  font-size: 16px;
+}
+
+.form__row__edit {
+  background-color: #42484d;
+  /* padding: 10px;
+  margin: 10px; */
+}
+
+.form__input.btn {
+  margin: 0 0 0 auto;
+  width: 80px;
+}
+
+.edit--del {
+  display: flex;
+  gap: 10px;
 }

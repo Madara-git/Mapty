@@ -1,6 +1,5 @@
-('use strict');
+'use strict';
 import { Running, Cycling } from './Workout.js';
-
 const form = document.querySelector('.form');
 const containerWorkouts = document.querySelector('.workouts');
 const inputType = document.querySelector('.form__input--type');
@@ -10,7 +9,7 @@ const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
 const sort = document.querySelector('#sort');
 
-class App {
+export default class App {
   #map;
   #mapE;
   #workouts = [];
@@ -19,8 +18,21 @@ class App {
     this._getDataFromLocalstorage();
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
-    containerWorkouts.addEventListener('click', this._moveToPuppup.bind(this));
-    containerWorkouts.addEventListener('click', this._deleteList.bind(this));
+    containerWorkouts.addEventListener('click', event => {
+      const target = event.target;
+      if (target.closest('.workout')) {
+        this._moveToPuppup(event);
+      }
+      if (target.classList.contains('del--btn')) {
+        this._deleteList(event);
+      }
+      if (target.classList.contains('edit')) {
+        this._edit(event);
+      }
+      if (target.classList.contains('btn--edit')) {
+        this._editbtn(event);
+      }
+    });
     sort.addEventListener('change', this._sort.bind(this));
   }
   _deleteList(e) {
@@ -141,14 +153,110 @@ class App {
       )
       .openPopup('');
   }
+  _edit(e) {
+    const edit = e.target.closest('.edit');
+    if (!edit) return;
+    const value = this.#workouts.find(
+      work => work.id === edit.closest('li').dataset.id
+    );
 
+    const li = document.querySelectorAll('.workout');
+    li.forEach(li => {
+      if (li.dataset.id === edit.dataset.id) {
+        const renderEdit = this._renderEdit(value);
+        if (li.children[li.children.length - 1].dataset.id !== value.id) {
+          li.insertAdjacentHTML('beforeend', renderEdit);
+        } else {
+          li.children[li.children.length - 1].remove();
+        }
+      } else {
+      }
+    });
+  }
+  _renderEdit(value) {
+    const html = `
+    <div class="form edit__form " data-id="${value.id}">
+      <div class="form__row" >
+            <label class="form__label">Distance</label>
+            <input class="form__input distance" placeholder="km" value=${
+              value.distance
+            } />
+          </div>
+          <div class="form__row">
+            <label class="form__label">Duration</label>
+            <input
+              class="form__input duration"
+              placeholder="min" value="${value.duration}"
+            />
+          </div>
+          <div class="form__row">
+            <label class="form__label">${
+              value.type === 'running' ? 'cadence' : 'Elev Gain'
+            }</label>
+            <input
+              class="form__input ${
+                value.type === 'running' ? 'cadence' : 'elevation'
+              }"
+              placeholder="step/min"
+              value="${
+                value.type === 'running' ? value.cadence : value.elevation
+              }"
+            />
+          </div>
+          <button class="form__input btn--edit"> edit </button>
+           </div>
+      `;
+    return html;
+  }
+
+  _editbtn(e) {
+    const btn = e.target.closest('.btn--edit');
+    if (!btn) return;
+    const distance = document.querySelector('.edit__form .distance');
+    const duration = document.querySelector('.edit__form .duration');
+    const cadence = document.querySelector('.edit__form .cadence');
+    const elevation = document.querySelector('.edit__form .elevation');
+    this.#workouts.filter(work => {
+      if (work.id === e.target.parentElement.dataset.id) {
+        work.distance = +distance.value;
+        work.duration = +duration.value;
+        this._sort();
+        if (work.cadence) {
+          work.cadence = +cadence.value;
+          work.pace = work.duration / work.distance;
+        }
+        if (work.elevation) {
+          work.elevation = +elevation.value;
+          work.speed = work.distance / (work.duration / 60);
+        }
+        const newValue = this._renderList(work);
+        const newLi = document.createElement('div');
+        newLi.innerHTML = newValue.trim();
+        this.CAL;
+        const newLiElement = newLi.firstChild;
+
+        const liElements = document.querySelectorAll('.workout');
+        liElements.forEach(li => {
+          if (li.dataset.id === work.id) {
+            li.parentNode.replaceChild(newLiElement, li);
+          }
+        });
+      }
+      this._setToLocalstorage(this.#workouts);
+    });
+  }
   _renderList(workout) {
     let html = `
       <li class="workout workout--${workout.type}" data-id="${workout.id}">
-   
-         <h2 class="workout__title">${
-           workout.descriptipn
-         }  <button class="del--btn" data-id=${workout.id}> x </button> </h2>
+        <div class="workout__title">
+          <h3 >${workout.descriptipn} </h3>
+          <div class="edit--del"> <button class="edit" data-id="${
+            workout.id
+          }"> edit </button>  <button class="del--btn" data-id=${
+      workout.id
+    }> x </button> </div>
+        </div>
+
             <div class="workout__details">
               <span class="workout__icon">${
                 workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'
@@ -187,12 +295,12 @@ class App {
             </div>
             <div class="workout__details">
               <span class="workout__icon">⛰</span>
-              <span class="workout__value">${workout.elevation}</span>
+              <span class="workout__value elevation">${workout.elevation}</span>
               <span class="workout__unit">m</span>
             </div>
           </li>`;
 
-    containerWorkouts.insertAdjacentHTML('beforeend', html);
+    return html;
   }
   _moveToPuppup(e) {
     const workout = e.target.closest('.workout');
@@ -211,8 +319,9 @@ class App {
     if (localStorage.getItem('workout')) {
       const data = JSON.parse(localStorage.getItem('workout'));
       this.#workouts = data;
-      this.#workouts.forEach(work => {
-        this._renderList(work);
+      this.#workouts.forEach(workout => {
+        const work = this._renderList(workout);
+        containerWorkouts.insertAdjacentHTML('beforeend', work);
       });
     }
     if (localStorage.getItem('sortValue')) {
@@ -226,14 +335,18 @@ class App {
         .filter(work => work.duration)
         .sort((a, b) => b.duration - a.duration);
       this._clearList();
-      sortList.forEach(work => {
-        this._renderList(work);
+      sortList.forEach(workout => {
+        const work = this._renderList(workout);
+        containerWorkouts.insertAdjacentHTML('beforeend', work);
       });
       this._setToLocalstorage(sortList);
     }
     if (sort.value === 'none') {
       this._clearList();
-      this.#workouts.forEach(work => this._renderList(work));
+      this.#workouts.forEach(workout => {
+        const work = this._renderList(workout);
+        containerWorkouts.insertAdjacentHTML('beforeend', work);
+      });
       this._setToLocalstorage(this.#workouts);
     }
     if (sort.value === 'distance') {
@@ -241,8 +354,9 @@ class App {
         .filter(work => work.distance)
         .sort((a, b) => b.distance - a.distance);
       this._clearList();
-      sortList.forEach(work => {
-        this._renderList(work);
+      sortList.forEach(workout => {
+        const work = this._renderList(workout);
+        containerWorkouts.insertAdjacentHTML('beforeend', work);
       });
       this._setToLocalstorage(sortList);
     }
@@ -257,5 +371,4 @@ class App {
     li.forEach(li => li.remove());
   }
 }
-
 const app = new App();
